@@ -1,10 +1,12 @@
 from django.shortcuts import render
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.status import HTTP_201_CREATED, HTTP_400_BAD_REQUEST, HTTP_204_NO_CONTENT
 
 from blogData.models import Article, Comment
+from blogData.permission import IsCommentAuthorOrAdminWithin24h, IsAuthorOrAdmin
 from blogData.serializers import ArticleListSerializer, ArticleDetailSerializer, CommentSerializer
 
 
@@ -22,7 +24,7 @@ class ArticleListView(APIView):
     def post(self, request):
         serializer = ArticleDetailSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save()
+            serializer.save(author=request.user)
             return Response(serializer.data, status=HTTP_201_CREATED)
         return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
 
@@ -38,6 +40,9 @@ class ArticleDetailView(APIView):
 
     def put(self, request, pk):
         article = self.get_object(pk)
+        permission = IsAuthorOrAdmin()
+        if not permission.has_object_permission(request, self, article):
+            raise PermissionDenied()
         serializer = ArticleDetailSerializer(article, data=request.data)
         if serializer.is_valid():
             serializer.save()
@@ -46,6 +51,9 @@ class ArticleDetailView(APIView):
 
     def delete(self, request, pk):
         article = self.get_object(pk)
+        permission = IsAuthorOrAdmin()
+        if not permission.has_object_permission(request, self, article):
+            raise PermissionDenied()
         article.delete()
         return Response(status=HTTP_204_NO_CONTENT)
 
@@ -61,7 +69,7 @@ class CommentListCreateView(APIView):
         article = get_object_or_404(Article, pk=article_pk)
         serializer = CommentSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save(article=article)
+            serializer.save(article=article, author=request.user)
             return Response(serializer.data, status=HTTP_201_CREATED)
         return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
 
@@ -78,6 +86,9 @@ class CommentDetailView(APIView):
 
     def put(self, request, article_pk, pk):
         comment = self.get_object(article_pk, pk)
+        permission = IsCommentAuthorOrAdminWithin24h()
+        if not permission.has_object_permission(request, self, comment):
+            raise PermissionDenied(permission.message)
         serializer = CommentSerializer(comment, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
@@ -85,6 +96,9 @@ class CommentDetailView(APIView):
         return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
 
     def delete(self, request, article_pk, pk):
-        Comment = self.get_object(article_pk, pk)
-        Comment.delete()
+        comment = self.get_object(article_pk, pk)
+        permission = IsCommentAuthorOrAdminWithin24h()
+        if not permission.has_object_permission(request, self, comment):
+            raise PermissionDenied(permission.message)
+        comment.delete()
         return Response(status=HTTP_204_NO_CONTENT)
