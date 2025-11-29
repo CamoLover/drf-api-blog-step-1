@@ -5,9 +5,9 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.status import HTTP_201_CREATED, HTTP_400_BAD_REQUEST, HTTP_204_NO_CONTENT
 
-from blogData.models import Article, Comment
+from blogData.models import Article, Comment, Concessionnaire, Vehicule
 from blogData.permission import IsCommentAuthorOrAdminWithin24h, IsAuthorOrAdmin
-from blogData.serializers import ArticleListSerializer, ArticleDetailSerializer, CommentSerializer
+from blogData.serializers import ArticleListSerializer, ArticleDetailSerializer, CommentSerializer, ConcessionnaireSerializer, VehiculeSerializer
 
 
 # Create your views here.
@@ -102,3 +102,43 @@ class CommentDetailView(APIView):
             raise PermissionDenied(permission.message)
         comment.delete()
         return Response(status=HTTP_204_NO_CONTENT)
+
+
+# GET /api/concessionnaires/
+class ConcessionnaireListView(APIView):
+    def get(self, request):
+        concessionnaires = Concessionnaire.objects.all()
+        serializer = ConcessionnaireSerializer(concessionnaires, many=True)
+        return Response(serializer.data)
+
+
+# GET /api/concessionnaires/<id>/
+class ConcessionnaireDetailView(APIView):
+    def get_object(self, pk):
+        return get_object_or_404(Concessionnaire, pk=pk)
+
+    def get(self, request, pk):
+        concessionnaire = self.get_object(pk)
+        serializer = ConcessionnaireSerializer(concessionnaire)
+        return Response(serializer.data)
+
+
+# GET /api/concessionnaires/<id>/vehicules/
+class ConcessionnaireVehiculeListView(APIView):
+    def get(self, request, concessionnaire_pk):
+        concessionnaire = get_object_or_404(Concessionnaire, pk=concessionnaire_pk)
+        vehicules = concessionnaire.vehicules.all()
+        serializer = VehiculeSerializer(vehicules, many=True)
+        return Response(serializer.data)
+
+
+# GET /api/concessionnaires/<id>/vehicules/<id>/
+class ConcessionnaireVehiculeDetailView(APIView):
+    def get_object(self, concessionnaire_pk, vehicule_pk):
+        concessionnaire = get_object_or_404(Concessionnaire, pk=concessionnaire_pk)
+        return get_object_or_404(Vehicule, pk=vehicule_pk, concessionnaire=concessionnaire)
+
+    def get(self, request, concessionnaire_pk, vehicule_pk):
+        vehicule = self.get_object(concessionnaire_pk, vehicule_pk)
+        serializer = VehiculeSerializer(vehicule)
+        return Response(serializer.data)
