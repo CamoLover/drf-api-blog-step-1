@@ -1,0 +1,9 @@
+{
+  "version": "1",
+  "name": "DRF API Blog - Concessionnaires",
+  "type": "collection",
+  "ignore": [
+    "node_modules",
+    ".git"
+  ]
+}

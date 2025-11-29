@@ -1,0 +1,30 @@
+meta {
+  name: List Vehicules
+  type: http
+  seq: 1
+}
+
+get {
+  url: http://localhost:8000/api/concessionnaires/1/vehicules/
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzY0NDMwNDAzLCJpYXQiOjE3NjQ0MjY4MDMsImp0aSI6IjM1ZTE5ODZmZjkwMjQ0NGRhY2Q0NjEwODE0NjdiMDg1IiwidXNlcl9pZCI6IjEifQ.khkYAP0N7Blic7T4V43WsvSRzzynGO4Xe-CaEfc1DV4
+}
+
+tests {
+  test("should get vehicules list successfully", function() {
+    expect(res.getStatus()).to.equal(200);
+    expect(res.getBody()).to.be.an('array');
+    if (res.getBody().length > 0) {
+      expect(res.getBody()[0]).to.have.property('id');
+      expect(res.getBody()[0]).to.have.property('type');
+      expect(res.getBody()[0]).to.have.property('marque');
+      expect(res.getBody()[0]).to.have.property('chevaux');
+      expect(res.getBody()[0]).to.have.property('prix_ht');
+      expect(res.getBody()[0]).to.have.property('concessionnaire');
+    }
+  });
+}

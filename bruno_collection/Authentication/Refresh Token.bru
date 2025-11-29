@@ -1,0 +1,33 @@
+meta {
+  name: Refresh Token
+  type: http
+  seq: 3
+}
+
+post {
+  url: http://localhost:8000/api/refresh_token/
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "refresh": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTc2NTAzMTU5MCwiaWF0IjoxNzY0NDI2NzkwLCJqdGkiOiIyMzNhYTgxNGIzYjM0MGMyOGJkN2M0ZDhmODgzNWY3MiIsInVzZXJfaWQiOiIxIn0.O8gfGR4bYp19wNWHY1sdZ-ehiHrteQACFj7NPnGgGhI"
+  }
+}
+
+script:post-response {
+  if (res.getStatus() === 200) {
+    const data = res.getBody();
+    bru.setEnvVar("accessToken", data.access);
+    bru.setEnvVar("refreshToken", data.refresh);
+  }
+}
+
+tests {
+  test("should refresh tokens successfully", function() {
+    expect(res.getStatus()).to.equal(200);
+    expect(res.getBody()).to.have.property('access');
+    expect(res.getBody()).to.have.property('refresh');
+  });
+}
